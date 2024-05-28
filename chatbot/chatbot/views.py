@@ -9,7 +9,7 @@ from openai import OpenAI
 
 EMBEDDING_MODEL = 'text-embedding-ada-002'
 GPT_MODEL = 'gpt-3.5-turbo'
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "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"))
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "api_key"))
 
 @api_view(['POST'])
 def chat(request):
