@@ -9,18 +9,36 @@ from openai import OpenAI
 import time
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from .message_queue import message_queue
+from .prompt import generatePrompt
+from pinecone import Pinecone
 
 EMBEDDING_MODEL = 'text-embedding-ada-002'
 GPT_MODEL = 'gpt-3.5-turbo'
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+PINECON_API_KEY = os.environ["PINECONE_API_KEY"]
+client = OpenAI(api_key=OPENAI_API_KEY)
+pc = Pinecone(api_key=PINECON_API_KEY)
+
+index = pc.Index('job-posting')
+
+def get_embedding(text):
+    res = client.embeddings.create(
+        input=text,
+        model=EMBEDDING_MODEL
+    )
+    embed = [record.embedding for record in res.data]
+    return embed[0]
 
 @api_view(['POST'])
 def chat(request):
     if request.method == 'POST':
         question = request.data['context']
+        embed_question = get_embedding(question)
+        search_result = index.query(vector=[embed_question], top_k=3, include_metadata=True)
+        relevant_docs = [match['metadata']['text'] for match in search_result['matches']]
         answer = client.chat.completions.create(
             messages= [
-                {'role': 'system', 'content': '너의 이름은 희수봇이야. 모든 말 끝에는 "얍" 이라는 말을 붙여. 예를들어 안녕하세요얍, 만나서 반갑습니다얍 이런식으로 모든 말 끝에 공백없이 얍을 붙여줘.'},
+                {'role': 'system', 'content': generatePrompt(relevant_docs)},
                 {'role': 'user', 'content': question}
             ],
             model=GPT_MODEL,
@@ -34,7 +52,7 @@ def chat(request):
 
 
 def sse(request):
-    message_queue.put(f"Bot: 안녕하세얍! 희수봇입니다얍. 무엇을 도와드릴까요얍?")
+    message_queue.put(f"Bot: 안녕하세얍! 무엇을 도와드릴까얍?")
     def event_stream():
         while True:
             if not message_queue.empty():
