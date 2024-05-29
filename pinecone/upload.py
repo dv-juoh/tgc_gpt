@@ -35,7 +35,7 @@ class FileToPineconeDB:
 
     def extract_text_from_image(self, image_path):
         img = Image.open(image_path)
-        text = pytesseract.image_to_string(image=img)
+        text = pytesseract.image_to_string(image=img, lang='kor+eng')
         return text
 
     def get_embedding(self, text):

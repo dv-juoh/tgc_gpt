@@ -46,9 +46,9 @@ def chat(request):
         )
         message_queue.put(f"Bot: {answer.choices[0].message.content}")
         print(answer.choices[0].message.content)
-        return JsonResponse({'status': 'Message received'})
+        return JsonResponse({'status': 'success'})
     else:
-        return JsonResponse({'status': 'Only POST method is allowed'})
+        return JsonResponse({'status': 'invalid method'})
 
 
 def sse(request):
