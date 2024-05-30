@@ -45,7 +45,6 @@ def chat(request):
             temperature=0
         )
         message_queue.put(f"Bot: {answer.choices[0].message.content}")
-        print(answer.choices[0].message.content)
         return JsonResponse({'status': 'success'})
     else:
         return JsonResponse({'status': 'invalid method'})
@@ -57,7 +56,8 @@ def sse(request):
         while True:
             if not message_queue.empty():
                 message = message_queue.get()
-                yield f"data: {message}\n\n"
+                for line in message.split('\n'):
+                    yield f"data: {line.strip()}\n\n"
             time.sleep(1)
 
     response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')

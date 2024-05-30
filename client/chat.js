@@ -1,5 +1,8 @@
 const eventSource = new EventSource("http://127.0.0.1:8000/sse");
 eventSource.onmessage = function (event) {
+  if (!event.data) {
+    return;
+  }
   const messagesDiv = document.getElementById("chat-messages");
   const botMessageDiv = document.createElement("div");
   botMessageDiv.classList.add("chat-message", "bot");
