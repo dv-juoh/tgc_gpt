@@ -1,19 +1,14 @@
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
 import os
-import pandas as pd
-import tiktoken
-from scipy import spatial
 from openai import OpenAI
 import time
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from .message_queue import message_queue
 from .prompt import generatePrompt
 from pinecone import Pinecone
 
 EMBEDDING_MODEL = 'text-embedding-ada-002'
-GPT_MODEL = 'gpt-3.5-turbo'
+GPT_MODEL = 'gpt-4'
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 PINECON_API_KEY = os.environ["PINECONE_API_KEY"]
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -38,12 +33,12 @@ def chat(request):
         relevant_docs = [match['metadata']['text'] for match in search_result['matches']]
         answer = client.chat.completions.create(
             messages= [
-                {'role': 'system', 'content': generatePrompt(relevant_docs)},
-                {'role': 'user', 'content': question}
+                {'role': 'user', 'content': generatePrompt(relevant_docs, question)}
             ],
             model=GPT_MODEL,
             temperature=0
         )
+        print(answer)
         message_queue.put(f"Bot: {answer.choices[0].message.content}")
         return JsonResponse({'status': 'success'})
     else:
